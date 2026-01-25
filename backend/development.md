@@ -27,30 +27,64 @@ source venv/bin/activate
 
 ### 2. Install Dependencies
 
-Navigate to the backend directory and install the required packages:
+Navigate to the backend directory and install the required packages.
 
-```bash
+**For Windows (PowerShell or Command Prompt):**
+
+If you have a virtual environment in `.venv`, use one of these methods:
+
+**Option 1: Using the installation script (Recommended)**
+```powershell
 cd backend
-pip install -r requirements.txt
+.\install-dependencies.ps1
 ```
+
+Or if PowerShell scripts are blocked, use the batch file:
+```cmd
+cd backend
+install-dependencies.bat
+```
+
+**Option 2: Manual installation**
+```powershell
+# Activate the virtual environment first
+.venv\Scripts\Activate.ps1
+
+# Then install dependencies
+python -m pip install -r requirements.txt
+```
+
+**Option 3: Direct path to pip in .venv**
+```powershell
+cd backend
+.venv\Scripts\python.exe -m pip install -r requirements.txt
+```
+
+**Note:** If you get a "pip is not recognized" error, use `python -m pip` instead of just `pip`.
 
 ### 3. Environment Variables
 
-Create a `.env` file in the `backend` directory with your database credentials:
+Create a `.env` file in the `backend` directory with your database credentials. You can copy `.env.example` to `.env` as a starting point:
+
+```bash
+cp .env.example .env
+```
+
+Then edit `.env` with your actual Azure PostgreSQL credentials:
 
 ```env
 # Azure PostgreSQL Connection Details
-DB_USER=your_database_user
-DB_PASSWORD=your_database_password
-DB_HOST=your_server.postgres.database.azure.com
+DB_HOST=your-db-host.postgres.database.azure.com
 DB_PORT=5432
-DB_NAME=your_database_name
+DB_USER=your-db-user
+DB_PASSWORD=your-db-password
+DB_NAME=your-db-name
 
-# Alternative: Use full connection string
-# DATABASE_URL=postgresql://user:password@host:port/database
+# Alternative: Use full connection string (for async driver)
+# DATABASE_URL=postgresql+asyncpg://user:password@host:port/database
 ```
 
-**Important:** Never commit the `.env` file to version control. Add it to `.gitignore`.
+**Important:** Never commit the `.env` file to version control. It's already in `.gitignore`.
 
 ### 4. Run the Development Server
 
@@ -77,12 +111,20 @@ Once the server is running, you can:
 ```
 backend/
 ├── main.py              # FastAPI application entry point
-├── database.py          # SQLAlchemy database configuration
+├── config.py            # Application configuration
+├── database.py          # Async SQLAlchemy database configuration
 ├── requirements.txt     # Python dependencies
 ├── development.md       # This file
+├── .env.example         # Environment variables template (safe to commit)
 ├── .env                 # Environment variables (not in git)
+├── core/                # Core application components
+│   └── app.py           # Application factory
 ├── routers/             # API route handlers
-├── models/              # SQLAlchemy database models
+│   ├── health.py        # Health check router
+│   ├── search.py        # Search router
+│   ├── practice.py      # Practice router
+│   └── progress.py      # Progress router
+├── models/             # SQLAlchemy database models
 └── schemas/             # Pydantic schemas for request/response validation
 ```
 

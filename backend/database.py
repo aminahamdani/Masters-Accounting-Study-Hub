@@ -1,59 +1,75 @@
+"""
+Database configuration and session management for Azure PostgreSQL.
+Uses SQLAlchemy with psycopg2-binary driver.
+"""
 from sqlalchemy import create_engine
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker
-import os
-from dotenv import load_dotenv
+from sqlalchemy.orm import sessionmaker, declarative_base
+from config import settings
+from typing import Optional
 
-# Load environment variables
-load_dotenv()
+# Lazy initialization - engine created only when needed
+_engine: Optional[object] = None
+_SessionLocal: Optional[sessionmaker] = None
 
-# Azure PostgreSQL connection string from environment variables
-def get_database_url():
-    """Construct database URL from environment variables"""
-    # First, try to get full DATABASE_URL
-    database_url = os.getenv("DATABASE_URL")
-    if database_url:
-        return database_url
-    
-    # Otherwise, construct from individual variables
-    db_user = os.getenv("DB_USER")
-    db_password = os.getenv("DB_PASSWORD")
-    db_host = os.getenv("DB_HOST")
-    db_port = os.getenv("DB_PORT", "5432")
-    db_name = os.getenv("DB_NAME")
-    
-    # Validate required variables
-    if not all([db_user, db_password, db_host, db_name]):
-        raise ValueError(
-            "Database configuration missing. Please set either DATABASE_URL or "
-            "all of: DB_USER, DB_PASSWORD, DB_HOST, DB_NAME"
-        )
-    
-    return f"postgresql://{db_user}:{db_password}@{db_host}:{db_port}/{db_name}"
+def get_engine():
+    """Get or create the database engine (lazy initialization)"""
+    global _engine, engine
+    if _engine is None:
+        try:
+            # Get database URL from settings (synchronous driver)
+            DATABASE_URL = settings.get_database_url(async_driver=False)
+            
+            # Create SQLAlchemy engine for Azure PostgreSQL
+            _engine = create_engine(
+                DATABASE_URL,
+                pool_pre_ping=True,  # Verify connections before using them
+                pool_size=settings.DB_POOL_SIZE,
+                max_overflow=settings.DB_MAX_OVERFLOW,
+                echo=settings.DB_ECHO
+            )
+            engine = _engine  # Update module-level engine for backward compatibility
+        except ValueError as e:
+            # If database config is missing, return None
+            # This allows the app to start without database credentials
+            return None
+    return _engine
 
-DATABASE_URL = get_database_url()
-
-# Create SQLAlchemy engine
-engine = create_engine(
-    DATABASE_URL,
-    pool_pre_ping=True,  # Verify connections before using them
-    pool_size=5,
-    max_overflow=10,
-    echo=False  # Set to True for SQL query logging in development
-)
-
-# Create SessionLocal class
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+def get_session_local():
+    """Get or create the session maker (lazy initialization)"""
+    global _SessionLocal
+    if _SessionLocal is None:
+        engine = get_engine()
+        if engine is None:
+            return None
+        _SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+    return _SessionLocal
 
 # Create Base class for models
 Base = declarative_base()
+
+# For backward compatibility - direct access to engine
+# This will be None until get_engine() is called
+engine = None
 
 # Dependency to get database session
 def get_db():
     """
     Dependency function to get database session.
     Use this in FastAPI route dependencies.
+    
+    Yields:
+        Session: Database session that will be automatically closed
+        
+    Raises:
+        ValueError: If database configuration is missing
     """
+    SessionLocal = get_session_local()
+    if SessionLocal is None:
+        raise ValueError(
+            "Database not configured. Please set database credentials in .env file. "
+            "See .env.example for required variables."
+        )
+    
     db = SessionLocal()
     try:
         yield db
