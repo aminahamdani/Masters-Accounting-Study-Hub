@@ -54,6 +54,14 @@ def register_startup_events(app: FastAPI) -> None:
         # Import models to ensure they're registered with Base.metadata
         from models import Topic  # noqa: F401
         
-        engine = get_engine()
-        if engine is not None:
-            Base.metadata.create_all(bind=engine)
+        try:
+            engine = get_engine()
+            if engine is not None:
+                Base.metadata.create_all(bind=engine)
+        except Exception as e:
+            # Log the error but don't prevent server startup
+            # Database endpoints will handle connection errors gracefully
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.warning(f"Could not initialize database on startup: {e}")
+            logger.info("Server will continue to run. Database endpoints may not work until PostgreSQL is running.")
