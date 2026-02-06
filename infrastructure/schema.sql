@@ -7,6 +7,7 @@ CREATE TABLE IF NOT EXISTS topics (
     name VARCHAR(255) NOT NULL,
     oer_link VARCHAR(500),
     asc_reference VARCHAR(100),
+    fasb_link VARCHAR(500),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
@@ -20,6 +21,7 @@ CREATE TABLE IF NOT EXISTS practice_templates (
     id SERIAL PRIMARY KEY,
     topic_id INTEGER NOT NULL,
     template_text TEXT NOT NULL,
+    expected_entries JSONB,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT fk_practice_templates_topic

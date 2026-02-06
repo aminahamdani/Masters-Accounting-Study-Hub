@@ -95,16 +95,18 @@ Masters Accounting Study Hub/
    psql -U postgres -d studyhub -f ../infrastructure/seed_data.sql
    ```
 
-5. **Start the development server**
+5. **Start the development server** (serves both API and frontend)
    ```bash
+   cd backend
    uvicorn main:app --reload
    ```
+   Or on Windows: double-click `backend/run.bat` (installs deps and starts the server).
 
-6. **Access the API**
-   - API Root: http://localhost:8000
-   - Health Check: http://localhost:8000/health
-   - API Docs: http://localhost:8000/docs
-   - Alternative Docs: http://localhost:8000/redoc
+6. **Open the app in your browser**
+   - **App (recommended):** http://127.0.0.1:8000/ (redirects to `/app/`)
+   - Health: http://127.0.0.1:8000/health
+   - API docs: http://127.0.0.1:8000/docs
+   - API root: http://127.0.0.1:8000/api
 
 ## 📚 API Endpoints
 

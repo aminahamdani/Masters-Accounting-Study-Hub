@@ -10,6 +10,7 @@ class TopicBase(BaseModel):
     name: str
     oer_link: Optional[str] = None
     asc_reference: Optional[str] = None
+    fasb_link: Optional[str] = None
 
 
 class TopicCreate(TopicBase):
@@ -22,6 +23,7 @@ class TopicUpdate(BaseModel):
     name: Optional[str] = None
     oer_link: Optional[str] = None
     asc_reference: Optional[str] = None
+    fasb_link: Optional[str] = None
 
 
 class Topic(TopicBase):

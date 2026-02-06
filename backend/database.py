@@ -18,19 +18,19 @@ def get_engine():
         try:
             # Get database URL from settings (synchronous driver)
             DATABASE_URL = settings.get_database_url(async_driver=False)
-            
             # Create SQLAlchemy engine for Azure PostgreSQL
             _engine = create_engine(
                 DATABASE_URL,
-                pool_pre_ping=True,  # Verify connections before using them
+                pool_pre_ping=True,
                 pool_size=settings.DB_POOL_SIZE,
                 max_overflow=settings.DB_MAX_OVERFLOW,
                 echo=settings.DB_ECHO
             )
-            engine = _engine  # Update module-level engine for backward compatibility
-        except ValueError as e:
-            # If database config is missing, return None
-            # This allows the app to start without database credentials
+            engine = _engine
+        except (ValueError, Exception):
+            # Missing config or connection error: allow app to run without DB
+            _engine = None
+            engine = None
             return None
     return _engine
 

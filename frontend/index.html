@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Master's Accounting Study Hub</title>
+  <link rel="stylesheet" href="styles.css" />
+  <!-- Optional: set window.API_BASE_URL if your API is elsewhere (e.g. "http://localhost:8000") -->
+  <script>if (window.API_BASE_URL === undefined) window.API_BASE_URL = "";</script>
+</head>
+<body>
+  <div id="connection-banner" class="connection-banner" role="status" aria-live="polite"></div>
+  <div class="app">
+    <header class="app-header">
+      <h1>Master's Accounting Study Hub</h1>
+      <p class="tagline">OER, FASB Codification, practice &amp; progress—all in one place</p>
+      <nav class="main-nav" aria-label="Main navigation">
+        <a href="#search" class="nav-link" data-page="search">Search</a>
+        <a href="#practice" class="nav-link" data-page="practice">Practice</a>
+        <a href="#ledger" class="nav-link" data-page="ledger">Ledger Simulator</a>
+        <a href="#dashboard" class="nav-link" data-page="dashboard">Dashboard</a>
+      </nav>
+    </header>
+
+    <main class="app-main">
+      <!-- Search -->
+      <section id="page-search" class="page active">
+        <section class="search-section">
+          <form id="search-form">
+            <label for="query">Topic-to-Resource Search</label>
+            <div class="search-input-group">
+              <input
+                type="text"
+                id="query"
+                name="query"
+                placeholder="e.g. Revenue Recognition, Leases, Fair Value"
+                required
+              />
+              <button type="submit">Search</button>
+            </div>
+          </form>
+          <p id="status-message" class="status-message"></p>
+        </section>
+        <section class="results-section">
+          <h2>Results</h2>
+          <ul id="results-list" class="results-list"></ul>
+        </section>
+      </section>
+
+      <!-- Practice -->
+      <section id="page-practice" class="page">
+        <h2>Practice Scenarios</h2>
+        <p class="section-desc">Choose a topic and try a scenario. Use the Ledger Simulator to check your work.</p>
+        <div class="practice-toolbar">
+          <label for="practice-topic">Topic</label>
+          <select id="practice-topic">
+            <option value="">Loading…</option>
+          </select>
+        </div>
+        <ul id="practice-list" class="practice-list"></ul>
+        <div id="practice-detail" class="practice-detail hidden">
+          <h3>Scenario</h3>
+          <p id="practice-scenario-text"></p>
+          <p><a href="#ledger" id="practice-try-ledger" class="button-link">Try in Ledger Simulator</a></p>
+        </div>
+      </section>
+
+      <!-- Ledger Simulator -->
+      <section id="page-ledger" class="page">
+        <h2>Ledger Simulator</h2>
+        <p class="section-desc">Enter debits and credits. Click “Check My Work” to validate that entries balance.</p>
+        <div class="ledger-optional">
+          <label for="ledger-template">Validate against scenario (optional)</label>
+          <select id="ledger-template">
+            <option value="">Free-form (balance only)</option>
+          </select>
+        </div>
+        <div class="ledger-entries">
+          <table class="ledger-table">
+            <thead>
+              <tr>
+                <th>Account</th>
+                <th>Debit</th>
+                <th>Credit</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="ledger-tbody">
+              <tr class="ledger-row">
+                <td><input type="text" class="ledger-account" placeholder="Account name" /></td>
+                <td><input type="number" class="ledger-debit" placeholder="0" min="0" step="0.01" /></td>
+                <td><input type="number" class="ledger-credit" placeholder="0" min="0" step="0.01" /></td>
+                <td><button type="button" class="ledger-remove" aria-label="Remove row">×</button></td>
+              </tr>
+            </tbody>
+          </table>
+          <button type="button" id="ledger-add-row">Add row</button>
+        </div>
+        <div class="ledger-actions">
+          <button type="button" id="ledger-check">Check My Work</button>
+        </div>
+        <p id="ledger-message" class="status-message"></p>
+      </section>
+
+      <!-- Dashboard -->
+      <section id="page-dashboard" class="page">
+        <h2>Learning Dashboard</h2>
+        <p class="section-desc">Track topics viewed, in progress, and mastered.</p>
+        <div class="dashboard-user">
+          <label for="dashboard-user-id">User ID (use same ID when logging progress from Search results)</label>
+          <input type="text" id="dashboard-user-id" placeholder="e.g. student1" />
+          <button type="button" id="dashboard-load">Load</button>
+        </div>
+        <div id="dashboard-summary" class="dashboard-summary hidden">
+          <div class="dashboard-cards">
+            <div class="card"><span class="card-value" id="d-viewed">0</span><span class="card-label">Viewed</span></div>
+            <div class="card"><span class="card-value" id="d-in-progress">0</span><span class="card-label">In Progress</span></div>
+            <div class="card"><span class="card-value" id="d-mastered">0</span><span class="card-label">Mastered</span></div>
+          </div>
+          <h3>Recent activity</h3>
+          <ul id="dashboard-activity" class="dashboard-activity"></ul>
+        </div>
+      </section>
+    </main>
+
+    <footer class="app-footer">
+      <p>&copy; <span id="year"></span> Master's Accounting Study Hub</p>
+    </footer>
+  </div>
+
+  <script src="app.js"></script>
+  <script>
+    // Show connection status on load
+    (function() {
+      var base = (typeof window !== "undefined" && window.API_BASE_URL !== undefined && window.API_BASE_URL !== "") ? window.API_BASE_URL : (window.location.protocol === "http:" || window.location.protocol === "https:" ? window.location.origin : "http://127.0.0.1:8000");
+      var url = (base.replace(/\/$/, "") || "") + "/health";
+      var banner = document.getElementById("connection-banner");
+      fetch(url, { method: "GET" }).then(function(r) {
+        if (r.ok) { banner.textContent = "Connected to API"; banner.className = "connection-banner connected"; }
+        else { banner.textContent = "API returned " + r.status; banner.className = "connection-banner error"; }
+      }).catch(function() {
+        banner.textContent = "Connection failed. Start the backend: run \"run.bat\" in the backend folder, or \"uvicorn main:app --reload\". Then open http://127.0.0.1:8000/ in your browser.";
+        banner.className = "connection-banner error";
+      });
+    })();
+  </script>
+</body>
+</html>

@@ -42,8 +42,8 @@ def register_routers(app: FastAPI) -> None:
     
     app.include_router(health.router)
     app.include_router(search.router, prefix="/api")
-    app.include_router(practice.router)
-    app.include_router(progress.router)
+    app.include_router(practice.router, prefix="/api")
+    app.include_router(progress.router, prefix="/api")
 
 
 def register_startup_events(app: FastAPI) -> None:
@@ -52,7 +52,7 @@ def register_startup_events(app: FastAPI) -> None:
     async def startup_event():
         """Initialize database tables on startup"""
         # Import models to ensure they're registered with Base.metadata
-        from models import Topic  # noqa: F401
+        from models import Topic, PracticeTemplate, ProgressLog  # noqa: F401
         
         try:
             engine = get_engine()
